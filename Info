@@ -1,0 +1,37 @@
+Player properties:
+    - Position Vector: [x,y]
+    - Velocity Vector: [x,y]
+    - Radius of Hitbox (Circle): r
+    - Image Object: Image:[w,h,src]
+    - Mass: m
+
+Particle properties:
+    - Position Vector: [x,y]
+    - Velocity Vector: [x,y]
+    - Acceleration Vector: [x,y]
+    - Image: [w,h,src]
+    - HitBox Rectangle: [w,h] oder HitBox Circle: r
+    - Mass: m
+
+Vector properties:
+    - x-Position: x
+    - y-Position: y
+
+Image properties:
+    - ImageSource: src
+    - height: h
+    - width: w
+
+Rectangle properties:
+    - height: h
+    - width: w
+
+Circle properties:
+    - radius: r
+
+-------------------CLIENT------------------:
+    - only computes visuals
+
+
+
+-------------------SERVER------------------:

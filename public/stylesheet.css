@@ -1,0 +1,31 @@
+* {
+    background: rgba(0,0,0,0.05);
+    margin: 0px;
+    padding: 0px;
+}
+
+#cursorElem{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: red;
+    border-radius: 50%;
+    pointer-events: none;
+    visibility: visible;
+}
+
+.cursor{
+    position: absolute;
+    background-repeat: no-repeat;
+    width: 80px;
+    height: auto;
+    pointer-events: none;
+}
+
+.cucu{
+    position: absolute;
+    background-repeat: no-repeat;
+    width: 80px;
+    height: auto;
+    pointer-events: none;
+}
