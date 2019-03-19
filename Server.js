@@ -26,20 +26,23 @@ io.on('connection', function(socket){
 
     //Funktionen werden verfügbar gemacht
     socket.on('sent values', function(posVector){
-        console.log("Received relative shiba position for Shiba-ID: ", socket.id, {x:posVector.x,y:posVector.y});
+        //console.log("Received relative shiba position for Shiba-ID: ", socket.id, {x:posVector.x,y:posVector.y});
         players[socket.id].posVector = posVector;
-
+        //console.log(players[socket.id]);
+        let keys = Object.keys(players);
+        //console.log(keys);
     });
+
     socket.on('arf',function(){
         var index = Math.floor(Math.random() * barks.length);
         var bark = barks[index];
         let iterations = 0;
-        let maxIterations = 10;
+        let maxIterations = 1;
         let timeout = 20;
 
         var myVar = setInterval(function (){
             io.emit('someArf', bark, socket.id);
-            console.log(timeout);
+            //console.log(timeout);
             iterations++;
             //setTimeout(myFunction, timeout);
             if (iterations >= maxIterations){
@@ -58,9 +61,17 @@ io.on('connection', function(socket){
 
 //Framerate
 setInterval(function(){
-    io.emit('sendCoordinates',players,"otherPlayers");
+
     moveCucumbers();
+
+    for (keys in players){
+        console.log(players[keys]);
+    }
+
+    io.emit('sendCoordinates',players,"otherPlayers");
+
     io.emit('sendCoordinates',particles,"cucumbers");
+
 },1000 / 200);
 
 app.use(express.static('public'));
@@ -92,7 +103,7 @@ function newParticle(x=0,y=0){
 
 function newPlayer(socketID){
     players[socketID] = {
-        posVector:proSet.newVector(100,100),
+        posVector:proSet.newVector(0,0),
         velVector:proSet.newVector(0,0),
         container:proSet.newContainer("shiba"),
         mass:5,
@@ -100,7 +111,6 @@ function newPlayer(socketID){
         health:3,
         maxSpeed:10
     };
-    console.log(players[socketID].container);
 }
 
 function getSockets(){
