@@ -1,5 +1,7 @@
-# Aliceblueboard
-A tainted whiteboard.
+# CucuHunt
 
-This project serves to create an enviroment as close as possible to an existing whiteboard.
+Hunt the cucumber.
 
+Catch the cucumber.
+
+ESCAPE!
