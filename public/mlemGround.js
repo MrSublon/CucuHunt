@@ -31,24 +31,19 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
     for (let key in elem) {
         let currentElem = elem[key];
 
-        if (i === 101) {
-            if (parentDivID==="otherPlayers" && key !== socket.id){
-                console.log("Another doggo");
-            }
-            console.log("BEFORE");
-            console.log(currentElem);
-        }
-
         var elementDOM = document.getElementById(key);
 
         var sizex = 0;
         var sizey = 0;
 
-        //console.log("CurentElement: ");
+        //console.log("CurrentElement: ");
 
 
         currentElem = convertElementToClientResolution(currentElem);
 
+        if (parentDivID === "cucumbers"){
+            console.log(currentElem);
+        }
 
         if (key === socket.id) {
             sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
@@ -64,6 +59,7 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
 
         //console.log(parentDivID);
         if (elementDOM === null) {
+
             var parentID = document.getElementById(parentDivID);
             //console.log(parentID);
             let newDiv = document.createElement("div");
@@ -83,19 +79,19 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
             newImg.src = currentElem.container.img.src;
             newImg.id = key;
             elementDOM = document.getElementById(key);
+            console.log("CREATED!");
+            console.log(elementDOM);
         }
-        let x = (currentElem.posVector.x - (currentElem.container.img.w / 2)); // * field.maxX;
-        let y = (currentElem.posVector.y - (currentElem.container.img.h / 2)); // * field.maxY;
+        let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2)); // * field.maxX;
+        let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2)); // * field.maxY;
+
+        sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
+        sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
 
         elementDOM.style.width = `${sizex}px`;
         elementDOM.style.height = `${sizey}px`;
         elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
-        if (i === 101) {
-            console.log("AFTER");
-            console.log(currentElem);
-            i = 0;
-        }
-        i++;
+
     }
 }
 
@@ -157,7 +153,7 @@ function moveHandler(){
     //console.log(clientElem.getAttribute("src")+" x: "+(cliPos.x - (clientPlayer.container.img.w/2))+" y: "+(cliPos.y - (clientPlayer.container.img.h/2)));
     let relCliPos = makeRelativeVector(cliPos);
 
-    console.log(relCliPos);
+    //console.log(relCliPos);
     socket.emit('sent values',relCliPos);
 }
 
@@ -208,6 +204,7 @@ function factorVector(vector, factor, factorIsVector=false){
         x = vector.x * factor;
         y = vector.y * factor;
     }
+    //console.log("vX,vY,factor, respX,respY: ",vector.x,vector.y,factor, x,y);
     return {x:x,y:y};
 }
 
@@ -238,9 +235,11 @@ function convertElementToClientResolution(element,reverse=false){
         fieldX = 1/field.x;
         fieldY = 1/field.y;
     }
+
     if (element.hasOwnProperty("posVector")) {
         //console.log(element.posVector);
         element.posVector = factorVector(element.posVector,field,true);
+        //return element;
     }
     /*
     if (element.hasOwnProperty("velVector")){
