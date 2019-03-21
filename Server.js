@@ -42,7 +42,7 @@ io.on('connection', function(socket){
         var index = Math.floor(Math.random() * barks.length);
         var bark = barks[index];
         let iterations = 0;
-        let maxIterations = 20;
+        let maxIterations = 1;
         let timeout = 20;
 
         var myVar = setInterval(function (){

@@ -165,7 +165,23 @@ socket.on('removePlayer',function(socketID){
 
 socket.on('someArf',function(bark,socketID){
     let audio = new Audio(bark);
+    audio.playbackRate
+        = 0.6;
+    audio.loop = true;
     audio.play();
+
+    /*
+    var myVar = setInterval(function (){
+        audio.pause();
+        console.log("Paused");
+
+        if (audio.ended){
+            clearInterval(myVar);
+        }
+        audio.load();
+    }, 10);
+    */
+
 });
 
 socket.on('onconnect',setup);
