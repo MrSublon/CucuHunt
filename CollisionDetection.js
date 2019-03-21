@@ -2,6 +2,16 @@ function detectCollision(object1,object2) { //lets one swap between collision ty
 
     var obj1IsCircle = true;
     var obj2IsCircle = true;
+
+    /*
+    if (object1.hasOwnProperty("hitBoxCircle")){
+        obj1IsCircle = false;
+    }
+    if (object2.hasOwnProperty("hitBoxCircle")){
+        obj2IsCircle = false;
+    }
+    */
+
     if(typeof(object1.hitBoxCircle) === "undefined"){
         obj1IsCircle = false;
     }
@@ -61,3 +71,7 @@ function collisionDetectionCircleWithRectangle(circle,rect){
     var distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
     return distanceSquared < (circle.r * circle.r);
 } //compares circle with rectangle
+
+module.exports = {
+    detectCollision
+};

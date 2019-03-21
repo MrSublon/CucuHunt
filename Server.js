@@ -26,9 +26,10 @@ const g = 9.81; //Gravitational force on earth
 io.on('connection', function(socket){
 
     newPlayer(socket.id);
-    newParticle(0.5,0.5);
-    console.log(particles[particles.length-1]);
-
+    /*
+    * newParticle(0.5,0.5);
+    * console.log(particles[particles.length-1]);
+    */
     console.log('user connected: ID: ' + socket.id);
 
     //Funktionen werden verfügbar gemacht
@@ -68,9 +69,8 @@ io.on('connection', function(socket){
 
     socket.on('dropChildNode',function(parentID){
         if (parentID === "cucumbers") {
-            particles.splice((particles.length - 1), 1);
-            console.log("delete");
-            io.emit('dropLastChild',parentID);
+            cutCucumber();
+
         }
     });
 
@@ -90,6 +90,12 @@ io.on('connection', function(socket){
 //Framerate
 setInterval(function(){
     moveCucumbers();
+
+    let haveCollided = checkCollision(players,particles);
+
+    for (let col in haveCollided){
+        cutCucumber(col.el1)
+    }
 
     io.emit('sendCoordinates',players,"otherPlayers");
 
@@ -119,6 +125,26 @@ function moveCucumbers(){
     });
 
 }
+
+function cutCucumber(id="last"){
+    if (id === "last"){id = particles.length - 1;}
+    particles.splice((id), 1);
+    io.emit('dropLastChild',"cucumbers");
+}
+
+function checkCollision(group1,group2){
+    let collided = [];
+    for (let el1 in group1){
+        for (let el2 in group2){
+            if (collision.detectCollision(el1,el2)){
+                collided.push({el1:el1,el2:el2});
+
+            }
+        }
+    }
+    return collided;
+}
+
 function newParticle(x=0,y=0){
     io.emit('test123');
     particles[particles.length] = {

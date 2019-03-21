@@ -221,8 +221,8 @@ function moveHandler(){
 
 socket.on('removePlayer',function(socketID){
     var parent = document.getElementById("otherPlayers");
-    var child = parent.getElementById(socketID);
-    parent.removeChild(child);
+    var child = document.getElementById(socketID);
+    child.parentElement.removeChild(child);
 
     //(`${socketID}`).removeItem();
 });
