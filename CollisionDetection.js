@@ -1,22 +1,15 @@
+const field = {x:1600,y:900};
+
 function detectCollision(object1,object2) { //lets one swap between collision types
 
-    var obj1IsCircle = true;
-    var obj2IsCircle = true;
+    var obj1IsCircle = false;
+    var obj2IsCircle = false;
 
-    /*
-    if (object1.hasOwnProperty("hitBoxCircle")){
-        obj1IsCircle = false;
+    if (object1.container.hasOwnProperty("hitBoxCircle")){
+        obj1IsCircle = true;
     }
-    if (object2.hasOwnProperty("hitBoxCircle")){
-        obj2IsCircle = false;
-    }
-    */
-
-    if(typeof(object1.hitBoxCircle) === "undefined"){
-        obj1IsCircle = false;
-    }
-    if(typeof(object2.hitBoxCircle) === "undefined"){
-        obj2IsCircle = false;
+    if (object2.container.hasOwnProperty("hitBoxCircle")){
+        obj2IsCircle = true;
     }
     
     if (obj1IsCircle) {
@@ -33,6 +26,7 @@ function detectCollision(object1,object2) { //lets one swap between collision ty
 }  //calls up respective function
 
 function collisionDetectionRectangles(rect1,rect2){  //both objects must contain: posVector with x = x and y = y, w = width, h = height
+
 
     var r1x = rect1.posVector.x-rect1.w/2;
     var r1y = rect1.posVector.y-rect1.h/2;
@@ -58,20 +52,41 @@ function collisionDetectionCircle(circle1,circle2) { //both objects must contain
 function collisionDetectionCircleWithRectangle(circle,rect){
 
     // clamp(value, min, max) - limits value to the range min..max
+    let widthRect = rect.container.img.w * rect.container.img.ratio2Screen;
+    let heightRect = rect.container.img.h * rect.container.img.ratio2Screen;
+    let xRect = rect.posVector.x * field.x;
+    let yRect = rect.posVector.y * field.y;
+    let xCirc = circle.posVector.x * field.x;
+    let yCirc = circle.posVector.y * field.y;
+    let rCirc = circle.container.hitBoxCircle.r * rect.container.img.ratio2Screen;
 
 // Find the closest point to the circle within the rectangle
-    var closestX = Math.clamp(circle.posVector.x, rect.posVector.x-rect.w/2, rect.posVector.x+rect.w/2);
-    var closestY = Math.clamp(circle.posVector.y, rect.posVector.y-rect.h/2, rect.posVector.y+rect.h/2);
+    var closestX = Math.clamp(xCirc, xRect-(widthRect)/2, xRect+widthRect/2);
+    var closestY = Math.clamp(yCirc, yRect-heightRect/2, yRect+heightRect/2);
 
 // Calculate the distance between the circle's center and this closest point
-    var distanceX = circle.posVector.x - closestX;
-    var distanceY = circle.posVector.y - closestY;
+    var distanceX = xCirc - closestX;
+    var distanceY = yCirc - closestY;
 
 // If the distance is less than the circle's radius, an intersection occurs
-    var distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
-    return distanceSquared < (circle.r * circle.r);
+    var distanceSquared = ((distanceX * distanceX) + (distanceY * distanceY));
+
+    //console.log("xRect",xRect,"yRect:",yRect,"xCirc:", xCirc,"yCirc",yCirc,"closestX:", closestX,"closestY:",closestY,"WidthRect:",widthRect,"heightRect:",heightRect,"distance:",distanceSquared);
+    let bool = (distanceSquared < (rCirc * rCirc));
+    //console.log(bool);
+    return bool;
 } //compares circle with rectangle
 
 module.exports = {
     detectCollision
+};
+
+Math.clamp = function(value, min, max){
+    if(value < min){
+        return min;
+    }else if(value > max){
+        return max;
+    }else{
+        return value;
+    }
 };

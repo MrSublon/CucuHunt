@@ -91,10 +91,10 @@ io.on('connection', function(socket){
 setInterval(function(){
     moveCucumbers();
 
-    let haveCollided = checkCollision(players,particles);
+    let haveCollided = checkCollision(players,particles); //returns array with both elements per block
 
     for (let col in haveCollided){
-        cutCucumber(col.el1)
+        cutCucumber(particles.indexOf(col.el2)); //needs id of cucumber
     }
 
     io.emit('sendCoordinates',players,"otherPlayers");
@@ -112,12 +112,9 @@ http.listen(3001, function(){
 function moveCucumbers(){
     particles.forEach(function(cucumber) {
         cucumber.accVector = calcAcceleration(cucumber);
-        //console.log(cucumber.accVector);
 
         cucumber.posVector = maths.addVectors(cucumber.posVector, cucumber.velVector);
         cucumber.velVector = calcVelocity(cucumber.velVector, cucumber.accVector,true);
-        //cucumber.velVector = maths.addVectors(cucumber.velVector, cucumber.accVector);
-        //cucumber.velVector =
 
         cucumber.posVector = moduloVector(0,0,1,1,cucumber.posVector);
 
@@ -135,8 +132,12 @@ function cutCucumber(id="last"){
 function checkCollision(group1,group2){
     let collided = [];
     for (let el1 in group1){
+        if(group1[el1].hasOwnProperty("isHunting")) {
+            if (group1[el1].isHunting === false) continue;
+        }
         for (let el2 in group2){
-            if (collision.detectCollision(el1,el2)){
+            if (collision.detectCollision(group1[el1],group2[el2])){
+                console.log("COLLIEDED!");
                 collided.push({el1:el1,el2:el2});
 
             }
@@ -152,7 +153,7 @@ function newParticle(x=0,y=0){
         velVector:proSet.newVector(0/200000,0/200000),
         accVector:proSet.newVector(1/200000,10/2000000),
         container:proSet.newContainer("cucumber"),
-        mass:0.000001,
+        mass:0.0001,
     };
     console.log("created particle with index: "+(particles.length-1));
 
@@ -163,7 +164,7 @@ function newPlayer(socketID){
         posVector:proSet.newVector(0,0),
         velVector:proSet.newVector(0,0),
         container:proSet.newContainer("shiba"),
-        mass:0.01,
+        mass:0.001,
         name:"xXxTremGamerxXx",
         health:3,
         maxSpeed:10,
@@ -202,8 +203,6 @@ function calcAcceleration(element) {
 
         if (playerID === "undefined") return;
         if (players[playerID].isHunting === false) return;
-        //console.log(players[playerID]);
-        //console.log(players[playerID]);
 
         let dist = distanceOfVectors(players[playerID].posVector,element.posVector);
 
@@ -213,8 +212,28 @@ function calcAcceleration(element) {
         if (dist<0.4) {
             accVec = maths.addVectors(accVec, maths.factorVector(difVec, strength));
         }
+    });
+
+    particles.forEach(function(cucumber) {
 
 
+        if (particles.indexOf(cucumber) === particles.indexOf(element)) return;
+
+        let dist = distanceOfVectors(cucumber.posVector, element.posVector);
+
+        let strength = attractionForce(cucumber.mass, element.mass, dist, GConstant) * (1);
+
+
+        let difVec = maths.subVectors(cucumber.posVector, element.posVector);
+
+        //console.log(strength,difVec,accVec);
+
+        if (dist > 0.2) {
+            accVec = maths.addVectors(accVec, maths.factorVector(difVec, strength));
+        }
+        if(dist < 0.15){
+            accVec = maths.addVectors(accVec, maths.factorVector(difVec, -strength));
+        }
     });
     element.accVector = accVec;
     return element.accVector;
