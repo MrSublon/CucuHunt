@@ -7,7 +7,9 @@ var io = require('socket.io')(http);
 const proSet = require('./propertySettings');
 const maths = require('./Maths');
 const collision = require('./CollisionDetection');
-const barks = ["bark1.wav","bark2.wav","bark3.wav","sniff1.wav"];
+
+const parentSFX = "SFX/";
+const barks = ["bark1.mp3","bark2.mp3","bark3.mp3","sniff1.mp3"];
 //relative positions
 var players = {};
 var particles = [];
@@ -16,7 +18,7 @@ var resolution = {x:1600,y:900};
 //testing
 var past = {};
 //------------PHYSICS-------------
-const GConstant = 667408 * 0.000000001;
+const GConstant = 667408 * 0.00000001;
 const g = 9.81; //Gravitational force on earth
 
 
@@ -33,6 +35,7 @@ io.on('connection', function(socket){
     socket.on('sent values', function(posVector){
         //console.log("Received relative shiba position for Shiba-ID: ", socket.id, {x:posVector.x,y:posVector.y});
         players[socket.id].posVector = posVector;
+
         //console.log(players[socket.id]);
         let keys = Object.keys(players);
         //console.log(keys);
@@ -42,11 +45,12 @@ io.on('connection', function(socket){
         var index = Math.floor(Math.random() * barks.length);
         var bark = barks[index];
         let iterations = 0;
-        let maxIterations = 1;
+        let maxIterations = 0;
         let timeout = 20;
 
         var myVar = setInterval(function (){
-            io.emit('someArf', bark, socket.id);
+            let directoryBark = parentSFX + bark;
+            io.emit('someArf', directoryBark, socket.id);
             //console.log(timeout);
             iterations++;
             //setTimeout(myFunction, timeout);
@@ -56,13 +60,30 @@ io.on('connection', function(socket){
         }, timeout);
     });
 
+    socket.on('placeCucumber',function(vector){ //x and y needed
+        if (particles.length<30){
+            newParticle(vector.x,vector.y);
+        }
+    });
+
+    socket.on('dropChildNode',function(parentID){
+        if (parentID === "cucumbers") {
+            particles.splice((particles.length - 1), 1);
+            console.log("delete");
+            io.emit('dropLastChild',parentID);
+        }
+    });
+
+    socket.on('isHunting',function(isHunting){
+        players[socket.id].isHunting = isHunting;
+    });
     //declares user as disconnected and removes his ID
     socket.on('disconnect', function(){
         delete players[socket.id];
-
-        socket.emit('removePlayer',socket.id);
+        io.emit('removePlayer',socket.id);
+        console.log("disconnected");
     });
-    io.emit('onconnect');
+    //io.emit('onconnect');
 });
 //move cucu
 
@@ -119,7 +140,8 @@ function newPlayer(socketID){
         mass:0.01,
         name:"xXxTremGamerxXx",
         health:3,
-        maxSpeed:10
+        maxSpeed:10,
+        isHunting:true
     };
 }
 
@@ -153,6 +175,7 @@ function calcAcceleration(element) {
     getSockets().forEach(function(playerID){
 
         if (playerID === "undefined") return;
+        if (players[playerID].isHunting === false) return;
         //console.log(players[playerID]);
         //console.log(players[playerID]);
 
@@ -161,8 +184,10 @@ function calcAcceleration(element) {
         let strength = attractionForce(players[playerID].mass,element.mass,dist,GConstant)*(-1);
 
         let difVec = maths.subVectors(players[playerID].posVector,element.posVector);
+        if (dist<0.4) {
+            accVec = maths.addVectors(accVec, maths.factorVector(difVec, strength));
+        }
 
-        accVec = maths.addVectors(accVec,maths.factorVector(difVec,strength));
 
     });
     element.accVector = accVec;
@@ -222,7 +247,7 @@ function calcVelocity(vector1,vector2,friction=false){
     velocityVector = maths.addVectors(vector1, vector2);
 
     if (friction){
-        var fricVec = maths.factorVector(velocityVector,0.005);
+        var fricVec = maths.factorVector(velocityVector,0.015);
         velocityVector = maths.subVectors(velocityVector,fricVec);
     }
     return velocityVector;
