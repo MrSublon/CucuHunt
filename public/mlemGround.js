@@ -20,6 +20,7 @@ var i = 0;
 var soundFile;
 var theme = ["Athletic Theme - Super Mario World.mp3","Main Theme - Super Smash Bros. Brawl.mp3","Sonic the Hedgehog - Green Hill Zone Theme.mp3"];
 var selTheme = "";
+var hypelevel = 1;
 
 var keysdown = {}; //stores false and true values of keys pressed
 var particles = []; //stores all particles affected by players
@@ -46,6 +47,7 @@ function setup(){ //setup function is called when HTML was loaded successfully
     soundFile.src = parentSFX + selTheme;
     soundFile.autoplay = "autoplay";
     soundFile.loop = "loop";
+    soundFile.playbackRate = 1;
     console.log(soundFile.readyState);
 
 
@@ -80,6 +82,7 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
 
             clientElem.style.width = `${sizex}px`;
             clientElem.style.height = `${sizey}px`;
+            clientElem.src = currentElem.container.img.src;
             continue;
         }//doesn't execute if key belongs to this client
 
@@ -136,15 +139,17 @@ document.addEventListener('mousedown',function(e){
 });
 
 document.addEventListener('keyup',function (event) {
-    keysdown[event.code] = false;
+
+    keysdown[event] = false;
     if (event.code === "ControlLeft"){
+        keysdown[event.code] = false;
         socket.emit('isHunting',true);
     }
 });
 
 document.addEventListener('keydown',function(event){
 
-    keysdown[event.code] = true;
+    keysdown[event.code] = !keysdown[event.code];
 
     if (event.code === "ControlLeft"){
         socket.emit('isHunting',false);
@@ -160,6 +165,17 @@ document.addEventListener('keydown',function(event){
         let index = (theme.indexOf(selTheme)+1)%theme.length;
         selTheme = theme[index];
         soundFile.src = parentSFX + selTheme;
+        soundFile.playbackRate = hypelevel;
+    }
+    if (event.code === "KeyS"){
+        if (!keysdown[event.code]){
+            console.log("1");
+            changeHypeLevel(1.5,0.01,20);
+        }
+        else {
+            console.log("2");
+            changeHypeLevel(0.5,0.01,20);
+        }
     }
 });
 
@@ -253,6 +269,26 @@ function hasCollidedWithWall(vector){ //checks if object collides with wall and 
     return false;
 }
 
+function changeHypeLevel(level,rate,timeout){
+    hypelevel = level;
+
+    var slowly = setInterval(function(){
+
+        soundFile.playbackRate = soundFile.playbackRate-((1-hypelevel)*rate);
+
+        if (hypelevel<1){
+            if (soundFile.playbackRate<hypelevel){
+                clearInterval(slowly);
+                console.log("cleared1.");
+            }
+        } else {
+            if (soundFile.playbackRate>hypelevel){
+                clearInterval(slowly);
+                console.log("cleared2.");
+            }
+        }
+    },timeout)
+}
 function calcDistance(x1,y1,x2,y2){
     return Math.sqrt(Math.pow(y2-y1,2)+Math.pow(x2-x1,2));
 }

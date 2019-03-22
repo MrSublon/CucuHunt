@@ -94,7 +94,16 @@ setInterval(function(){
     let haveCollided = checkCollision(players,particles); //returns array with both elements per block
 
     for (let col in haveCollided){
-        cutCucumber(particles.indexOf(col.el2)); //needs id of cucumber
+        //console.log(haveCollided[col].el1,haveCollided[col].el2);
+        let playerindex = haveCollided[col].el1;
+        let particleindex = haveCollided[col].el2;
+
+        console.log("PLAYER: "+playerindex);
+
+        cutCucumber(particleindex); //needs id of cucumber
+
+        players[playerindex].container.img.src = "shibaWithCucu.png";
+        players[playerindex].isHunting = false;
     }
 
     io.emit('sendCoordinates',players,"otherPlayers");
@@ -131,6 +140,7 @@ function cutCucumber(id="last"){
 
 function checkCollision(group1,group2){
     let collided = [];
+    dance:
     for (let el1 in group1){
         if(group1[el1].hasOwnProperty("isHunting")) {
             if (group1[el1].isHunting === false) continue;
@@ -139,9 +149,12 @@ function checkCollision(group1,group2){
             if (collision.detectCollision(group1[el1],group2[el2])){
                 console.log("COLLIEDED!");
                 collided.push({el1:el1,el2:el2});
-
+                continue dance;
             }
         }
+    }
+    for(let each in collided){
+        console.log(collided[each].el1,collided[each].el2);
     }
     return collided;
 }
@@ -164,7 +177,7 @@ function newPlayer(socketID){
         posVector:proSet.newVector(0,0),
         velVector:proSet.newVector(0,0),
         container:proSet.newContainer("shiba"),
-        mass:0.001,
+        mass:0.01,
         name:"xXxTremGamerxXx",
         health:3,
         maxSpeed:10,

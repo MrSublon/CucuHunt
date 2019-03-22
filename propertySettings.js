@@ -1,4 +1,4 @@
-const imageProperties = {cucumber:{w:995,h:256,src:"cucumber.png",ratio2Screen:0.1},errorShibe:{w:352,h:346,src:"errorShibe.png",ratio2Screen:0.2},
+const imageProperties = {cucumber:{w:995,h:256,src:"cucumber.png",ratio2Screen:0.07},errorShibe:{w:352,h:346,src:"errorShibe.png",ratio2Screen:0.2},
     shiba:{w:321,h:412,src:"shiba.png",ratio2Screen:0.2},shibaWithCucu:{w:321,h:412,src:"shibaWithCucu.png",ratio2Screen:0.2}};
 
 function newVector(x=0,y=0){
