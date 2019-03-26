@@ -11,10 +11,11 @@ var wallCollisionPadding = 0;
 var wallColSFX;
 //SFX
 const parentSFX = "SFX/";
+var currentBarks = {};
 
 const imageProperties = {cucumber:{w:995,h:256,src:"cucumber.png",ratio2Screen:0.2},errorShibe:{w:352,h:346,src:"errorShibe.png",ratio2Screen:0.2},
     shiba:{w:321,h:412,src:"shiba.png",ratio2Screen:0.2},shibaWithCucu:{w:321,h:412,src:"shibaWithCucu.png",ratio2Screen:0.2}};
-var maxSpeed = 10;
+//var maxSpeed = 1;
 var i = 0;
 
 var soundFile;
@@ -24,19 +25,21 @@ var hypelevel = 1;
 
 var keysdown = {}; //stores false and true values of keys pressed
 var particles = []; //stores all particles affected by players
-var clientPlayer = {posVector:{x:0,y:0},velVector:{x:0,y:0},container:{img:imageProperties["shiba"],hitBoxCircle:{r:5}, mass:5},maxSpeed:30, name:"xXxTremGamerxXx", health:3};
+var clientPlayer = {posVector:{x:0,y:0},velVector:{x:0,y:0},container:{img:imageProperties["shiba"],hitBoxCircle:{r:5}, mass:5},maxSpeed:0.01, name:"xXxTremGamerxXx", health:3};
 
 var otherplayers = {}; //stores all players
 
 var cursorPos = {x:0,y:0};
 var field = {x:0,y:0};
+const zeroVector = {x:0,y:0};
+const serverResolution = {x:1600,y:900};
 
 // window.addEventListener("load", setup);
 function setup(){ //setup function is called when HTML was loaded successfully
     adjustCanvasSize();
 
     //wall Collision Settings
-    wallCollisionPadding = ((field.x+field.y) / 2)/100;
+    wallCollisionPadding = ((field.x+field.y) / 2)/200;
     wallColSFX = document.createElement("audio");
     wallColSFX.src = parentSFX + "emerald 0007 - Wall Bump Obstruction.mp3";
 
@@ -48,12 +51,9 @@ function setup(){ //setup function is called when HTML was loaded successfully
     soundFile.autoplay = "autoplay";
     soundFile.loop = "loop";
     soundFile.playbackRate = 1;
+    soundFile.muted = true;
     console.log(soundFile.readyState);
 
-
-    //var themeMusic = new Audio();
-    //themeMusic.loop = true;
-    //themeMusic.play();
     console.log("yee");
 }
 
@@ -111,8 +111,8 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
             console.log("CREATED!");
             console.log(elementDOM);
         }
-        let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2)); // * field.maxX;
-        let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2)); // * field.maxY;
+        let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2));
+        let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2));
 
         sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
         sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
@@ -179,6 +179,7 @@ document.addEventListener('keydown',function(event){
     }
 });
 
+canvasElem.addEventListener('touchmove',setMouseCoordinates);
 
 canvasElem.addEventListener('mousemove',setMouseCoordinates);
 
@@ -205,24 +206,46 @@ function dropLastChildNode(parentID){
 }
 
 function setMouseCoordinates(e){
-    cursorPos = {x:e.offsetX,y:e.offsetY};
+    e.preventDefault();
+
+    if (e.type === "touchmove"){
+        console.log("touched");
+        cursorPos = {x:e.targetTouches[0].clientX,y:e.targetTouches[0].clientY};
+
+        if (e.targetTouches[1] !== undefined){
+            socket.emit('arf',e);
+        }
+    } else if (e.type === "mousemove"){
+        console.log("steared");
+        cursorPos = {x:e.offsetX,y:e.offsetY};
+    }
     cursorElem.style.transform = "translate(" + cursorPos.x + "px, " + cursorPos.y + "px)";
 }
 
 setInterval(moveHandler,1000/200);
 
 function moveHandler(){
+
     if (equalVector(clientPlayer.posVector,cursorPos)) return; //only executes if vectors are unequal
+
     let cliPos = clientPlayer.posVector;
-    let distance = distanceOfVectors(cursorPos,cliPos);
-    if (distance<=clientPlayer.maxSpeed){distance = clientPlayer.maxSpeed} //caps distance at max speed of player
+    let distance = distanceOfVectors(cursorPos, cliPos, true);
+
+    let maxDistance = distanceOfVectors(field,zeroVector)*clientPlayer.maxSpeed;
+
+    if (distance<=maxDistance) {
+        distance = maxDistance} //caps distance at max speed of player
+
+    console.log(distance);
+
     clientPlayer.velVector = subVectors(cursorPos,cliPos);
-    clientPlayer.velVector = factorVector(clientPlayer.velVector,clientPlayer.maxSpeed/distance);
+    clientPlayer.velVector = factorVector(clientPlayer.velVector,maxDistance/distance);
 
     cliPos = clientPlayer.posVector = addVectors(cliPos,clientPlayer.velVector);
-    //let imgx =
+
     let imgPos = factorVector({x:clientPlayer.container.img.w,y:clientPlayer.container.img.h},clientPlayer.container.img.ratio2Screen);
     clientElem.style.transform = "translate(" + (cliPos.x - imgPos.x/2) + "px, " + (cliPos.y - imgPos.y/2)+ "px)";
+
 
     if (hasCollidedWithWall(cliPos)){
         wallColSFX.play();
@@ -230,26 +253,32 @@ function moveHandler(){
 
     let relCliPos = makeRelativeVector(cliPos);
 
-
     //console.log(relCliPos);
     socket.emit('sent values',relCliPos);
 }
 
 socket.on('removePlayer',function(socketID){
-    var parent = document.getElementById("otherPlayers");
+
     var child = document.getElementById(socketID);
     child.parentElement.removeChild(child);
 
-    //(`${socketID}`).removeItem();
 });
 
 socket.on('someArf',function(bark,socketID){
 
     let audio = new Audio(bark);
-    audio.playbackRate = 1;
-    //audio.loop = true;
-    audio.play();
-
+    audio.playbackRate = hypelevel;
+    console.log(currentBarks[socketID]);
+    console.log(audio.paused);
+    if(currentBarks[socketID]==null) { //currentBarks[socketID]=="" || currentBarks[socketID]=='null'
+        currentBarks[socketID] = {audio:audio};
+        console.log("now in array");
+    }
+    if (currentBarks[socketID].audio.paused){
+        currentBarks[socketID] = {audio:audio};
+        currentBarks[socketID].audio.play();
+        console.log("arf?");
+    }
 
 });
 
@@ -293,8 +322,15 @@ function calcDistance(x1,y1,x2,y2){
     return Math.sqrt(Math.pow(y2-y1,2)+Math.pow(x2-x1,2));
 }
 
-function distanceOfVectors(vector1, vector2){
-    return Math.sqrt(Math.pow(vector2.y-vector1.y,2)+Math.pow(vector2.x-vector1.x,2));
+function distanceOfVectors(vector1, vector2, calcInRelationToServer = false){
+
+    let yMod = 1;
+    let xMod = 1;
+    if (calcInRelationToServer === true){
+        xMod = (serverResolution.x/serverResolution.y) / (field.x/field.y);
+        yMod = (serverResolution.y/serverResolution.x) / (field.y/field.x);
+    }
+    return Math.sqrt(Math.pow((vector2.y-vector1.y) * yMod,2)+Math.pow((vector2.x-vector1.x) * xMod,2));
 }
 
 function addVectors(vector1, vector2){

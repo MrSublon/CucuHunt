@@ -180,7 +180,7 @@ function newPlayer(socketID){
         mass:0.01,
         name:"xXxTremGamerxXx",
         health:3,
-        maxSpeed:10,
+        maxSpeed:1,
         isHunting:true
     };
 }
