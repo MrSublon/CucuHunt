@@ -9,19 +9,22 @@ const cursorElem = document.querySelector('#cursorELem');
 //collision padding px
 var wallCollisionPadding = 0;
 var wallColSFX;
-//SFX
+
+// SFX
+//make yellow
 const parentSFX = "SFX/";
 var currentBarks = {};
 
 const imageProperties = {cucumber:{w:995,h:256,src:"cucumber.png",ratio2Screen:0.2},errorShibe:{w:352,h:346,src:"errorShibe.png",ratio2Screen:0.2},
     shiba:{w:321,h:412,src:"shiba.png",ratio2Screen:0.2},shibaWithCucu:{w:321,h:412,src:"shibaWithCucu.png",ratio2Screen:0.2}};
-//var maxSpeed = 1;
-var i = 0;
+
+var i = 0; //outside variable for testing
 
 var soundFile;
 var theme = ["Athletic Theme - Super Mario World.mp3","Main Theme - Super Smash Bros. Brawl.mp3","Sonic the Hedgehog - Green Hill Zone Theme.mp3"];
 var selTheme = "";
 var hypelevel = 1;
+var barksAccepted = true;
 
 var keysdown = {}; //stores false and true values of keys pressed
 var particles = []; //stores all particles affected by players
@@ -32,7 +35,7 @@ var otherplayers = {}; //stores all players
 var cursorPos = {x:0,y:0};
 var field = {x:0,y:0};
 const zeroVector = {x:0,y:0};
-const serverResolution = {x:1600,y:900};
+const serverResolution = {x:3,y:2};
 
 // window.addEventListener("load", setup);
 function setup(){ //setup function is called when HTML was loaded successfully
@@ -69,13 +72,21 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
 
         currentElem = convertElementToClientResolution(currentElem);
 
+        sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
+        sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
+
+        let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2));
+        let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2));
+
         if (parentDivID === "cucumbers"){
             //console.log(currentElem);
         }
 
         if (key === socket.id) {
+            /*
             sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
             sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
+             */
 
             clientPlayer.container = currentElem.container;
             clientPlayer.mass = currentElem.mass;
@@ -83,44 +94,63 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
             clientElem.style.width = `${sizex}px`;
             clientElem.style.height = `${sizey}px`;
             clientElem.src = currentElem.container.img.src;
-            continue;
+
+            elementDOM = clientElem;
         }//doesn't execute if key belongs to this client
 
+
         //console.log(parentDivID);
-        if (elementDOM === null) {
+        else {
+            if (elementDOM === null) {
 
-            var parentID = document.getElementById(parentDivID);
-            //console.log(parentID);
-            let newDiv = document.createElement("div");
-            let newImg = document.createElement("img");
+                var parentID = document.getElementById(parentDivID);
+                //console.log(parentID);
+                let newDiv = document.createElement("div");
+                let newImg = document.createElement("img");
 
-            newDiv.appendChild(newImg);
-            parentID.appendChild(newDiv);
-            var className = "";
+                newDiv.appendChild(newImg);
+                parentID.appendChild(newDiv);
+                var className = "";
 
-            if (parentDivID === "otherPlayers") {
-                className = "cursor";
-            } else if (parentDivID === "cucumbers") {
-                className = "cucu";
+                if (parentDivID === "otherPlayers") {
+                    className = "cursor";
+                } else if (parentDivID === "cucumbers") {
+                    className = "cucu";
+                }
+                newImg.className = className;
+                newImg.alt = className;
+                newImg.src = currentElem.container.img.src;
+                newImg.id = key;
+                elementDOM = document.getElementById(key);
+                console.log("CREATED!");
+                console.log(elementDOM);
             }
-            newImg.className = className;
-            newImg.alt = className;
-            newImg.src = currentElem.container.img.src;
-            newImg.id = key;
-            elementDOM = document.getElementById(key);
-            console.log("CREATED!");
-            console.log(elementDOM);
+            elementDOM.style.width = `${sizex}px`;
+            elementDOM.style.height = `${sizey}px`;
+            elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
         }
-        let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2));
-        let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2));
 
-        sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
-        sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
+        //check if dog is barking and transforms its position
+        /*
+        let adressedNode;
+        console.log(elementDOM);
+        if (elementDOM === null || elementDOM === undefined) {
+            console.log("was null yes");
+            adressedNode = clientElem;
+        }else {
+            adressedNode = elementDOM;
+        }
+        */
+        let adressedNode = elementDOM;
+        //console.log(adressedNode.parentElement);
+        if (adressedNode.parentElement.getElementsByClassName("arf").length === 1) {
+            let arfElem = adressedNode.parentElement.getElementsByClassName("arf")[0];
+            let arfX = x + sizex / 2;
+            let arfY = y - sizey / 2;
 
-        elementDOM.style.width = `${sizex}px`;
-        elementDOM.style.height = `${sizey}px`;
-        elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
-
+            arfElem.style.transform = "translate(" + arfX + "px, " + arfY + "px)";
+            // YES, the child element is inside the parent
+        }
     }
 }
 
@@ -209,14 +239,14 @@ function setMouseCoordinates(e){
     e.preventDefault();
 
     if (e.type === "touchmove"){
-        console.log("touched");
+
         cursorPos = {x:e.targetTouches[0].clientX,y:e.targetTouches[0].clientY};
 
         if (e.targetTouches[1] !== undefined){
             socket.emit('arf',e);
         }
     } else if (e.type === "mousemove"){
-        console.log("steared");
+
         cursorPos = {x:e.offsetX,y:e.offsetY};
     }
     cursorElem.style.transform = "translate(" + cursorPos.x + "px, " + cursorPos.y + "px)";
@@ -235,8 +265,6 @@ function moveHandler(){
 
     if (distance<=maxDistance) {
         distance = maxDistance} //caps distance at max speed of player
-
-    console.log(distance);
 
     clientPlayer.velVector = subVectors(cursorPos,cliPos);
     clientPlayer.velVector = factorVector(clientPlayer.velVector,maxDistance/distance);
@@ -265,19 +293,54 @@ socket.on('removePlayer',function(socketID){
 });
 
 socket.on('someArf',function(bark,socketID){
+    if (barksAccepted) {
+        let audio = new Audio(bark);
+        audio.playbackRate = hypelevel;
 
-    let audio = new Audio(bark);
-    audio.playbackRate = hypelevel;
-    console.log(currentBarks[socketID]);
-    console.log(audio.paused);
-    if(currentBarks[socketID]==null) { //currentBarks[socketID]=="" || currentBarks[socketID]=='null'
-        currentBarks[socketID] = {audio:audio};
-        console.log("now in array");
-    }
-    if (currentBarks[socketID].audio.paused){
-        currentBarks[socketID] = {audio:audio};
-        currentBarks[socketID].audio.play();
-        console.log("arf?");
+        if (currentBarks[socketID] == null) { //currentBarks[socketID]=="" || currentBarks[socketID]=='null'
+            currentBarks[socketID] = {audio: audio};
+
+        }
+        if (currentBarks[socketID].audio.paused) {
+            currentBarks[socketID] = {audio: audio};
+            currentBarks[socketID].audio.play();
+
+            //create image with bark
+            let thisShibeBarkes;
+            if (socket.id === socketID) {
+                thisShibeBarkes = clientElem;
+            } else {
+                thisShibeBarkes = document.getElementById(socketID);
+            }
+            currentBarks[socketID].audio.addEventListener('loadedmetadata', function () {
+                var arfElem = document.createElement("img");
+                arfElem.className = "arf";
+
+                let duration = audio.duration;
+
+                //arfElem.style.transitionTimingFunction = "ease-in-out";
+                //arfElem.style.transitionDuration = `${duration}s`;
+                arfElem.style.width = `${((field.x + field.y) / 2) / 10}px`;
+                arfElem.style.height = "auto";
+                //arfElem.style.transform = `scaleY${1.5}`;
+                arfElem.src = "bark.png";
+                console.log(arfElem);
+
+                thisShibeBarkes.parentElement.appendChild(arfElem);
+                console.log(arfElem.parentElement);
+
+
+                console.log(currentBarks[socketID].audio.currentTime);
+                console.log(duration);
+                var animateBark = setInterval(function () {
+                    if (currentBarks[socketID].audio.currentTime >= duration) {
+                        arfElem.remove();
+                        clearInterval(animateBark);
+                    }
+                }, 10);
+            });
+        }
+
     }
 
 });
@@ -318,6 +381,7 @@ function changeHypeLevel(level,rate,timeout){
         }
     },timeout)
 }
+
 function calcDistance(x1,y1,x2,y2){
     return Math.sqrt(Math.pow(y2-y1,2)+Math.pow(x2-x1,2));
 }

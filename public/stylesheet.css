@@ -29,3 +29,11 @@
     height: auto;
     pointer-events: none;
 }
+
+.arf{
+    position: absolute;
+    background-repeat: no-repeat;
+    width: 80px;
+    height: auto;
+    pointer-events: none;
+}
