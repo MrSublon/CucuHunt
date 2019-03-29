@@ -1,13 +1,13 @@
 * {
-    background: rgba(0,0,0,0.05);
+    /*background: rgba(0,0,0,0.05);*/
     margin: 0px;
     padding: 0px;
 }
 
-#cursorElem{
+.cursorElem{
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 10px;
+    height: 10px;
     background: red;
     border-radius: 50%;
     pointer-events: none;
@@ -36,4 +36,22 @@
     width: 80px;
     height: auto;
     pointer-events: none;
+}
+
+.gamerTag{
+    position: absolute;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    font-family: Georgia, serif;
+    color: darkgrey;
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
 }

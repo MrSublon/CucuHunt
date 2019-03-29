@@ -2,8 +2,10 @@ const socket = io();
 //--------------------------------------------------Elements--------------------------------------------------//
 const canvasElem = document.querySelector('#canvas');
 const ctx = canvasElem.getContext('2d');
-const clientElem = document.querySelector('#clientElem');
-const cursorElem = document.querySelector('#cursorELem');
+const cursorElem = document.querySelector('#cursorElem');
+const shibaElem = document.querySelector('#shibas');
+var clientElem; //needed to play game offline
+var clientImgElem;
 
 //game
 //collision padding px
@@ -38,7 +40,9 @@ const zeroVector = {x:0,y:0};
 const serverResolution = {x:3,y:2};
 
 // window.addEventListener("load", setup);
-function setup(){ //setup function is called when HTML was loaded successfully
+function setup(socketID){ //setup function is called when HTML was loaded successfully
+
+    console.log("Hello World!");
     adjustCanvasSize();
 
     //wall Collision Settings
@@ -55,18 +59,21 @@ function setup(){ //setup function is called when HTML was loaded successfully
     soundFile.loop = "loop";
     soundFile.playbackRate = 1;
     soundFile.muted = true;
-    console.log(soundFile.readyState);
 
-    console.log("yee");
+    setupShibeHTML(socketID,clientPlayer.name,clientPlayer.container.img.src);
+
+    clientElem = document.getElementById(socketID);
+    clientImgElem = clientElem.getElementsByClassName("cursor")[0];
 }
+
+socket.on('placeID',function(id){
+    setup(id);
+});
 
 function updatePositions(elem,parentDivID) { //every element must have a key with posVector:x,y and container:img:w,h
 
     for (let key in elem) {
         let currentElem = elem[key];
-
-        var elementDOM = document.getElementById(key);
-
         var sizex = 0;
         var sizey = 0;
 
@@ -75,81 +82,59 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
         sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
         sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
 
+        if (key === socket.id){
+            //update Client Container
+            clientPlayer.container = currentElem.container;
+            clientImgElem.src = clientPlayer.container.img.src;
+            clientImgElem.style.width = clientPlayer.container.img.w;
+            clientImgElem.style.height = clientPlayer.container.img.h;
+        }
+
         let x = (currentElem.posVector.x - (currentElem.container.img.w * currentElem.container.img.ratio2Screen / 2));
         let y = (currentElem.posVector.y - (currentElem.container.img.h * currentElem.container.img.ratio2Screen / 2));
 
-        if (parentDivID === "cucumbers"){
-            //console.log(currentElem);
-        }
+        var elementDOM = document.getElementById(key);
 
-        if (key === socket.id) {
-            /*
-            sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
-            sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
-             */
-
-            clientPlayer.container = currentElem.container;
-            clientPlayer.mass = currentElem.mass;
-
-            clientElem.style.width = `${sizex}px`;
-            clientElem.style.height = `${sizey}px`;
-            clientElem.src = currentElem.container.img.src;
-
-            elementDOM = clientElem;
-        }//doesn't execute if key belongs to this client
-
-
-        //console.log(parentDivID);
-        else {
-            if (elementDOM === null) {
-
-                var parentID = document.getElementById(parentDivID);
-                //console.log(parentID);
-                let newDiv = document.createElement("div");
-                let newImg = document.createElement("img");
-
-                newDiv.appendChild(newImg);
-                parentID.appendChild(newDiv);
-                var className = "";
-
-                if (parentDivID === "otherPlayers") {
-                    className = "cursor";
-                } else if (parentDivID === "cucumbers") {
-                    className = "cucu";
-                }
-                newImg.className = className;
-                newImg.alt = className;
-                newImg.src = currentElem.container.img.src;
-                newImg.id = key;
-                elementDOM = document.getElementById(key);
-                console.log("CREATED!");
-                console.log(elementDOM);
+        //CREATES NECESSARY ELEMENTS IF NEEDED
+        if (elementDOM === null) {
+            if (parentDivID === "shibas") {
+                let imageSource = currentElem.container.img.src;
+                setupShibeHTML(key,currentElem.name,imageSource);
+            } else if (parentDivID === "cucumbers") {
+                setupCucuHTML(key,currentElem.container.img.src);
             }
-            elementDOM.style.width = `${sizex}px`;
-            elementDOM.style.height = `${sizey}px`;
+            elementDOM = document.getElementById(key);
+        }
+
+        if (parentDivID === "shibas"){
+            let cursorImg = elementDOM.getElementsByClassName("cursor")[0];
+
+            if (!(socket.id === key)) {
+                elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
+            }
+            let nameElem = elementDOM.getElementsByClassName("gamerTag")[0];
+            nameElem.style.transform = "translate(" + -(sizex/2) + "px, " + (sizey) + "px)";
+
+            cursorImg.style.width = `${sizex}px`;
+            cursorImg.style.height = `${sizey}px`;
+
+            //check if dog is barking and transforms its position
+            if (elementDOM.getElementsByClassName("arf").length === 1) {
+
+                let arfElem = elementDOM.getElementsByClassName("arf")[0];
+
+                let arfX = getRandomNumber(-2,2)+sizex/2;
+                let arfY = getRandomNumber(-2,2)-sizey/2;
+
+                console.log(arfX,arfY);
+
+                arfElem.style.transform = "translate("+arfX+"px, " + arfY + "px)";
+                // YES, the child element is inside the parent
+            }
+        }
+
+        if (parentDivID === "cucumbers"){
             elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
-        }
-
-        //check if dog is barking and transforms its position
-        /*
-        let adressedNode;
-        console.log(elementDOM);
-        if (elementDOM === null || elementDOM === undefined) {
-            console.log("was null yes");
-            adressedNode = clientElem;
-        }else {
-            adressedNode = elementDOM;
-        }
-        */
-        let adressedNode = elementDOM;
-        //console.log(adressedNode.parentElement);
-        if (adressedNode.parentElement.getElementsByClassName("arf").length === 1) {
-            let arfElem = adressedNode.parentElement.getElementsByClassName("arf")[0];
-            let arfX = x + sizex / 2;
-            let arfY = y - sizey / 2;
-
-            arfElem.style.transform = "translate(" + arfX + "px, " + arfY + "px)";
-            // YES, the child element is inside the parent
         }
     }
 }
@@ -272,6 +257,8 @@ function moveHandler(){
     cliPos = clientPlayer.posVector = addVectors(cliPos,clientPlayer.velVector);
 
     let imgPos = factorVector({x:clientPlayer.container.img.w,y:clientPlayer.container.img.h},clientPlayer.container.img.ratio2Screen);
+    //let imgPos = {x:clientPlayer.container.img.w,y:clientPlayer.container.img.h};
+
     clientElem.style.transform = "translate(" + (cliPos.x - imgPos.x/2) + "px, " + (cliPos.y - imgPos.y/2)+ "px)";
 
 
@@ -306,14 +293,12 @@ socket.on('someArf',function(bark,socketID){
             currentBarks[socketID].audio.play();
 
             //create image with bark
-            let thisShibeBarkes;
-            if (socket.id === socketID) {
-                thisShibeBarkes = clientElem;
-            } else {
-                thisShibeBarkes = document.getElementById(socketID);
-            }
+            let thisShibeBarkes = document.getElementById(socketID);
+
             currentBarks[socketID].audio.addEventListener('loadedmetadata', function () {
                 var arfElem = document.createElement("img");
+                let imageElem = thisShibeBarkes.getElementsByClassName("cursor")[0];
+
                 arfElem.className = "arf";
 
                 let duration = audio.duration;
@@ -322,16 +307,16 @@ socket.on('someArf',function(bark,socketID){
                 //arfElem.style.transitionDuration = `${duration}s`;
                 arfElem.style.width = `${((field.x + field.y) / 2) / 10}px`;
                 arfElem.style.height = "auto";
+
+                let posX = imageElem.clientWidth/2;
+                let posY = -imageElem.clientHeight/2;
+
+                arfElem.style.transform = "translate(" + posX + "px, " + posY + "px)";
                 //arfElem.style.transform = `scaleY${1.5}`;
                 arfElem.src = "bark.png";
-                console.log(arfElem);
 
-                thisShibeBarkes.parentElement.appendChild(arfElem);
-                console.log(arfElem.parentElement);
+                thisShibeBarkes.appendChild(arfElem);
 
-
-                console.log(currentBarks[socketID].audio.currentTime);
-                console.log(duration);
                 var animateBark = setInterval(function () {
                     if (currentBarks[socketID].audio.currentTime >= duration) {
                         arfElem.remove();
@@ -340,9 +325,7 @@ socket.on('someArf',function(bark,socketID){
                 }, 10);
             });
         }
-
     }
-
 });
 
 socket.on('onconnect',setup);
@@ -477,4 +460,45 @@ function wait(ms){
     while(end < start + ms) {
         end = new Date().getTime();
     }
+}
+
+function setupShibeHTML(playerID,name,imageSrc){
+    console.log(imageSrc);
+    var parentID = document.getElementById("shibas");
+    //console.log(parentID);
+    let playerDiv = document.createElement("div");
+    let newImg = document.createElement("img");
+    let nameDiv = document.createElement("div");
+
+    playerDiv.appendChild(newImg);
+    playerDiv.appendChild(nameDiv);
+    parentID.appendChild(playerDiv);
+
+    newImg.className = "cursor";
+    newImg.alt = "cursor";
+    newImg.src = imageSrc;
+
+    nameDiv.innerText = name;
+    nameDiv.className = "gamerTag";
+
+    playerDiv.id = playerID;
+}
+
+function setupCucuHTML(cucuID,imageSrc){
+    var parentID = document.getElementById("cucumbers");
+    //console.log(parentID);
+    let cucuDiv = document.createElement("div");
+    let newImg = document.createElement("img");
+
+    cucuDiv.appendChild(newImg);
+    parentID.appendChild(cucuDiv);
+
+    newImg.className = "cucu";
+    newImg.alt = "cucu";
+    newImg.src = imageSrc;
+    cucuDiv.id = cucuID;
+}
+
+function getRandomNumber(min,max){
+    return Math.random()*(max-min)+min;
 }

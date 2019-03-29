@@ -25,6 +25,7 @@ const g = 9.81; //Gravitational force on earth
 //wird einmal ausgeführt beim Erstellen eines neuen Sockets
 io.on('connection', function(socket){
 
+    socket.emit('placeID',socket.id);
     newPlayer(socket.id);
     /*
     * newParticle(0.5,0.5);
@@ -104,9 +105,10 @@ setInterval(function(){
 
         players[playerindex].container.img.src = "shibaWithCucu.png";
         players[playerindex].isHunting = false;
+        players[playerindex].hasCucu = true;
     }
 
-    io.emit('sendCoordinates',players,"otherPlayers");
+    io.emit('sendCoordinates',players,"shibas");
 
     io.emit('sendCoordinates',particles,"cucumbers");
 
@@ -181,7 +183,9 @@ function newPlayer(socketID){
         name:"xXxTremGamerxXx",
         health:3,
         maxSpeed:1,
-        isHunting:true
+        isHunting:true,
+        hasCucu:false,
+        isVulnerable:false
     };
 }
 

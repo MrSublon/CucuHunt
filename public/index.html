@@ -6,18 +6,17 @@
     <link rel="stylesheet" href="stylesheet.css">
     <script src="io.js"></script>
 </head>
-<body oncontextmenu="return false" style="overflow: hidden" onload="setup()">
+<body class="noselect" oncontextmenu="return false" style="overflow: hidden">
 
     <!----Containers for imagery---->
-
-    <div id="clientPlayer">
-        <img class="cursor" src="shiba.png" alt="cursor" id="clientElem">
+    <div id="cursorElem" style="pointer-events: none">
+        <img class="cursorElem" src="Gertie-Ball-Image-Green-transparent.png" alt="ball" style="pointer-events: none">
     </div>
-    <div id="otherPlayers">
+
+    <div id="shibas">
     </div>
     <div id="cucumbers">
     </div>
-    <div id="cursorELem"></div>
 
 
     <canvas id="canvas" height="600" width="800" style="cursor: none"></canvas>
