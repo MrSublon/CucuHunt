@@ -1,6 +1,6 @@
 const express = require('express');
 
-var i = 1;
+var i = 1; //used for iteration testing
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -25,7 +25,7 @@ const g = 9.81; //Gravitational force on earth
 //wird einmal ausgeführt beim Erstellen eines neuen Sockets
 io.on('connection', function(socket){
 
-    socket.emit('placeID',socket.id);
+    socket.emit('setupClient',socket.id);
     newPlayer(socket.id);
     /*
     * newParticle(0.5,0.5);
@@ -84,7 +84,7 @@ io.on('connection', function(socket){
         io.emit('removePlayer',socket.id);
         console.log("disconnected");
     });
-    //io.emit('onconnect');
+    socket.emit('onconnect');
 });
 //move cucu
 

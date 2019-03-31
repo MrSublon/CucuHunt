@@ -19,6 +19,7 @@ var currentBarks = {};
 
 const imageProperties = {cucumber:{w:995,h:256,src:"cucumber.png",ratio2Screen:0.2},errorShibe:{w:352,h:346,src:"errorShibe.png",ratio2Screen:0.2},
     shiba:{w:321,h:412,src:"shiba.png",ratio2Screen:0.2},shibaWithCucu:{w:321,h:412,src:"shibaWithCucu.png",ratio2Screen:0.2}};
+const toggleText = {LMB:["Bark!","Place Cucumber"],keyM:["Mute Music","Mute SFX"]};
 
 var i = 0; //outside variable for testing
 
@@ -27,6 +28,7 @@ var theme = ["Athletic Theme - Super Mario World.mp3","Main Theme - Super Smash 
 var selTheme = "";
 var hypelevel = 1;
 var barksAccepted = true;
+var shibaMoved = {lastMoved:0,isMoving:false};
 
 var keysdown = {}; //stores false and true values of keys pressed
 var particles = []; //stores all particles affected by players
@@ -42,8 +44,9 @@ const serverResolution = {x:3,y:2};
 // window.addEventListener("load", setup);
 function setup(socketID){ //setup function is called when HTML was loaded successfully
 
-    console.log("Hello World!");
-    adjustCanvasSize();
+    console.log("Henlo World!");
+
+    updateCanvasSize();
 
     //wall Collision Settings
     wallCollisionPadding = ((field.x+field.y) / 2)/200;
@@ -58,15 +61,22 @@ function setup(socketID){ //setup function is called when HTML was loaded succes
     soundFile.autoplay = "autoplay";
     soundFile.loop = "loop";
     soundFile.playbackRate = 1;
-    soundFile.muted = true;
+    //soundFile.muted = true;
 
     setupShibeHTML(socketID,clientPlayer.name,clientPlayer.container.img.src);
+    console.log("setting up.");
 
     clientElem = document.getElementById(socketID);
     clientImgElem = clientElem.getElementsByClassName("cursor")[0];
+
+    socket.on('sendCoordinates',function(elements, parentDivID) {
+
+        updatePositions(elements,parentDivID);
+
+    });
 }
 
-socket.on('placeID',function(id){
+socket.on('setupClient',function(id){
     setup(id);
 });
 
@@ -74,13 +84,13 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
 
     for (let key in elem) {
         let currentElem = elem[key];
-        var sizex = 0;
-        var sizey = 0;
+        var imgWidth = 0;
+        var imgHeight = 0;
 
         currentElem = convertElementToClientResolution(currentElem);
 
-        sizex = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
-        sizey = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
+        imgWidth = currentElem.container.img.w * currentElem.container.img.ratio2Screen;
+        imgHeight = currentElem.container.img.h * currentElem.container.img.ratio2Screen;
 
         if (key === socket.id){
             //update Client Container
@@ -113,18 +123,18 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
                 elementDOM.style.transform = "translate(" + x + "px, " + y + "px)";
             }
             let nameElem = elementDOM.getElementsByClassName("gamerTag")[0];
-            nameElem.style.transform = "translate(" + -(sizex/2) + "px, " + (sizey) + "px)";
+            nameElem.style.transform = "translate(" + -(imgWidth/2) + "px, " + (imgHeight) + "px)";
 
-            cursorImg.style.width = `${sizex}px`;
-            cursorImg.style.height = `${sizey}px`;
+            cursorImg.style.width = `${imgWidth}px`;
+            cursorImg.style.height = `${imgHeight}px`;
 
             //check if dog is barking and transforms its position
             if (elementDOM.getElementsByClassName("arf").length === 1) {
 
                 let arfElem = elementDOM.getElementsByClassName("arf")[0];
 
-                let arfX = getRandomNumber(-2,2)+sizex/2;
-                let arfY = getRandomNumber(-2,2)-sizey/2;
+                let arfX = getRandomNumber(-2,2)+imgWidth/2;
+                let arfY = getRandomNumber(-2,2)-imgHeight/2;
 
                 console.log(arfX,arfY);
 
@@ -139,26 +149,32 @@ function updatePositions(elem,parentDivID) { //every element must have a key wit
     }
 }
 
-socket.on('sendCoordinates',function(elements, parentDivID) {
-    updatePositions(elements,parentDivID);
-});
-
 document.addEventListener('mousedown',function(e){
     if (keysdown["ControlLeft"]){
         let fricVec = {x:e.offsetX,y:e.offsetY};
         let relVector = makeRelativeVector(fricVec);
         socket.emit('placeCucumber',relVector);
     } else {
+        colorButton("LMB-tooltip",true);
         socket.emit('arf',e);
     }
+});
+
+document.addEventListener('mouseup',function(e){
+    colorButton("LMB-tooltip",false);
 });
 
 document.addEventListener('keyup',function (event) {
 
     keysdown[event] = false;
     if (event.code === "ControlLeft"){
+        colorButton("Ctrl-tooltip",false);
+        toggleHTMLTooltips(false);
         keysdown[event.code] = false;
         socket.emit('isHunting',true);
+    }
+    if(event.code ==="KeyN"){
+        colorButton("N-tooltip",false);
     }
 });
 
@@ -167,6 +183,8 @@ document.addEventListener('keydown',function(event){
     keysdown[event.code] = !keysdown[event.code];
 
     if (event.code === "ControlLeft"){
+        colorButton("Ctrl-tooltip",true);
+        toggleHTMLTooltips(true);
         socket.emit('isHunting',false);
     }
     if (event.code === "KeyC"){
@@ -174,9 +192,16 @@ document.addEventListener('keydown',function(event){
     }
 
     if (event.code === "KeyM"){ //Mute music track
-        soundFile.muted = !soundFile.muted;
+        if (keysdown["ControlLeft"]) {
+            colorButton("M-tooltip",barksAccepted);
+            barksAccepted = !barksAccepted;
+        }else {
+            colorButton("M-tooltip", !soundFile.muted);
+            soundFile.muted = !soundFile.muted;
+        }
     }
     if (event.code === "KeyN"){ //Change music track
+        colorButton("N-tooltip",true);
         let index = (theme.indexOf(selTheme)+1)%theme.length;
         selTheme = theme[index];
         soundFile.src = parentSFX + selTheme;
@@ -194,13 +219,41 @@ document.addEventListener('keydown',function(event){
     }
 });
 
+function toggleHTMLTooltips(on=true){
+    let index;
+    if (on){
+        index = 1;
+        colorButton("M-tooltip",!barksAccepted);
+    }
+    else {
+        index = 0;
+        colorButton("M-tooltip",soundFile.muted);
+    }
+    console.log(toggleText["LMB"]);
+    document.getElementById("toggle-LMB").innerText = toggleText["LMB"][index];
+    document.getElementById("toggle-M").innerText = toggleText["keyM"][index];
+
+}
+
 canvasElem.addEventListener('touchmove',setMouseCoordinates);
 
 canvasElem.addEventListener('mousemove',setMouseCoordinates);
 
-window.addEventListener('resize',adjustCanvasSize);
+window.addEventListener('resize',updateCanvasSize);
 
-function adjustCanvasSize(){ //takes window properties and sets canvas to its size
+
+function colorButton(key,pressed){
+    let keyElem = document.getElementById(key);
+    if (pressed){
+        keyElem.style.transitionDuration = "0.05s";
+        keyElem.style.backgroundColor = "rgba(250,150,90,0.2)";
+        return;
+    }
+    keyElem.style.transitionDuration = "0.05s";
+    keyElem.style.backgroundColor = "rgba(0,0,0,0.03)";
+}
+
+function updateCanvasSize(){ //takes window properties and sets canvas to its size
     field.x = window.innerWidth;
     field.y = window.innerHeight;
 
@@ -241,7 +294,15 @@ setInterval(moveHandler,1000/200);
 
 function moveHandler(){
 
-    if (equalVector(clientPlayer.posVector,cursorPos)) return; //only executes if vectors are unequal
+    if (equalVector(clientPlayer.posVector,cursorPos)) {
+        if (shibaMoved.isMoving === true){
+            var time = new Date();
+            shibaMoved.isMoving = false;
+            shibaMoved.lastMoved = time.getSeconds();
+        }
+
+        return;
+    } //only surpasses if vectors are unequal
 
     let cliPos = clientPlayer.posVector;
     let distance = distanceOfVectors(cursorPos, cliPos, true);
@@ -268,6 +329,18 @@ function moveHandler(){
 
     let relCliPos = makeRelativeVector(cliPos);
 
+    if (shibaMoved.isMoving === false){
+        if (barksAccepted) {
+            var time = new Date();
+            var dif = time.getSeconds() - shibaMoved.lastMoved;
+            console.log(dif);
+            if (dif > 1) {
+                movingSFX();
+            }
+        }
+        shibaMoved.isMoving = true;
+    }
+
     //console.log(relCliPos);
     socket.emit('sent values',relCliPos);
 }
@@ -286,7 +359,6 @@ socket.on('someArf',function(bark,socketID){
 
         if (currentBarks[socketID] == null) { //currentBarks[socketID]=="" || currentBarks[socketID]=='null'
             currentBarks[socketID] = {audio: audio};
-
         }
         if (currentBarks[socketID].audio.paused) {
             currentBarks[socketID] = {audio: audio};
@@ -328,11 +400,17 @@ socket.on('someArf',function(bark,socketID){
     }
 });
 
-socket.on('onconnect',setup);
+//socket.on('onconnect',setup(id));
 
 socket.on('test123',function(){
     console.log("test123");
 });
+
+function movingSFX(){
+        let sanicSFX = new Audio();
+    sanicSFX.src = "SFX/Sonic - Roll Charge sound effect.mp3";
+    sanicSFX.play();
+}
 
 function hasCollidedWithWall(vector){ //checks if object collides with wall and set padding
     if (vector.x>(field.x - wallCollisionPadding) || vector.x < wallCollisionPadding){
@@ -432,6 +510,7 @@ function convertElementToClientResolution(element,reverse=false){
     if (reverse){
         fieldX = 1/field.x;
         fieldY = 1/field.y;
+        field = {x:fieldX,y:fieldY}; //places inverted values
     }
 
     if (element.hasOwnProperty("posVector")) {
@@ -463,7 +542,6 @@ function wait(ms){
 }
 
 function setupShibeHTML(playerID,name,imageSrc){
-    console.log(imageSrc);
     var parentID = document.getElementById("shibas");
     //console.log(parentID);
     let playerDiv = document.createElement("div");

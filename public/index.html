@@ -8,6 +8,41 @@
 </head>
 <body class="noselect" oncontextmenu="return false" style="overflow: hidden">
 
+
+    <div id="background-layer">
+        <div id="tooltips">
+            <div class="table-row">
+                <div class="table-cell">
+                    <div class="tooltip" id="C-tooltip">C</div>
+                </div>
+                <div class="table-cell">Remove Cucumber</div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell">
+                    <div class="tooltip" id="N-tooltip">N</div>
+                </div>
+                <div class="table-cell">Next title</div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell">
+                    <div class="tooltip" id="M-tooltip">M</div>
+                </div>
+                <div id="toggle-M" class="table-cell">Mute Music</div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell">
+                    <div class="tooltip" id="LMB-tooltip">LMB</div>
+                </div>
+                <div id="toggle-LMB" class="table-cell">Bark!</div>
+            </div>
+            <div class="table-row">
+                <div class="table-cell">
+                    <div class="tooltip" id="Ctrl-tooltip">Ctrl</div>
+                </div>
+                <div class="table-cell">Menu</div>
+            </div>
+        </div>
+    </div>
     <!----Containers for imagery---->
     <div id="cursorElem" style="pointer-events: none">
         <img class="cursorElem" src="Gertie-Ball-Image-Green-transparent.png" alt="ball" style="pointer-events: none">
@@ -18,8 +53,8 @@
     <div id="cucumbers">
     </div>
 
-
     <canvas id="canvas" height="600" width="800" style="cursor: none"></canvas>
+
 
     <script type="text/javascript" src="mlemGround.js"></script>
 

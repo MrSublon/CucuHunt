@@ -2,6 +2,8 @@
     /*background: rgba(0,0,0,0.05);*/
     margin: 0px;
     padding: 0px;
+    font-family: Georgia, serif;
+    color: darkgrey;
 }
 
 .cursorElem{
@@ -42,8 +44,6 @@
     position: absolute;
     background-repeat: no-repeat;
     pointer-events: none;
-    font-family: Georgia, serif;
-    color: darkgrey;
 }
 
 .noselect {
@@ -54,4 +54,36 @@
     -ms-user-select: none; /* Internet Explorer/Edge */
     user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
+}
+
+#tooltips{
+    pointer-events: none;
+    bottom:0;
+    position: fixed;
+    padding: 0.4em;
+    border-spacing: 0.2em;
+    margin: 0.1em;
+}
+
+#ctrlTooltip {
+
+}
+
+.tooltip{
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 3px solid rgba(0,0,0,0.1);
+    background-color: rgba(0,0,0,0.03);
+    text-align: center;
+    display:inline-flex;
+    vertical-align: middle;
+}
+
+.table-row{
+    display: table-row;
+}
+
+.table-cell{
+    display: inline-flex;
+    margin-right: 10px;
 }
